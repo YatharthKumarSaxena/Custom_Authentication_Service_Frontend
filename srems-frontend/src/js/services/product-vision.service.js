@@ -58,23 +58,24 @@ class ProductVisionService {
   }
 
   /**
+   * Update product vision
    * Backend: PATCH /product-vision/update/:projectId
    */
-  async updateProductVision(projectId, visionId, updateData) {
+  async updateProductVision(projectId, updateData) {
     return apiClient.patch(
       `${API_CONFIG.ENDPOINTS.PRODUCT_VISION}/update/${projectId}`,
-      { visionId, ...updateData }FIG.ENDPOINTS.PRODUCT_VISION}/update/${visionId}`,
       updateData
     );
   }
 
   /**
+   * Delete product vision
    * Backend: DELETE /product-vision/delete/:projectId
    */
-  async deleteProductVision(projectId, visionId) {
+  async deleteProductVision(projectId, deleteData = {}) {
     return apiClient.delete(
       `${API_CONFIG.ENDPOINTS.PRODUCT_VISION}/delete/${projectId}`,
-      { visionId }
+      deleteData
     );
   }
 
