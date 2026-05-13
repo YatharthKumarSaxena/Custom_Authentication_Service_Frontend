@@ -252,3 +252,6 @@ class ApiClient {
 export const apiClient = new ApiClient();
 
 export default apiClient;
+
+// Dev: apiClient initialized (debug)
+console.debug('apiClient initialized');
