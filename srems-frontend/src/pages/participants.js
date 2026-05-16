@@ -21,8 +21,34 @@ class ParticipantsPage {
   async init() {
     setTimeout(() => {
       this.setupEventListeners();
-      this.loadParticipants();
+      this.updateMeetingInfoDisplay();  // ✅ Show current meeting info
+      this.loadParticipants();  // ✅ Auto-load participants on init
     }, 50);
+  }
+
+  // ✅ NEW: Display current meeting info
+  updateMeetingInfoDisplay() {
+    const meetingDisplay = document.getElementById('currentMeetingDisplay');
+    const meetingIdInput = document.getElementById('participantMeetingId');
+    
+    if (!meetingDisplay) return;
+
+    let meetingId = localStorage.getItem('CURRENT_MEETING') || '';
+    let meetingTitle = localStorage.getItem('CURRENT_MEETING_TITLE') || 'Unknown Meeting';
+
+    // ✅ Auto-populate the meeting ID input field
+    if (meetingIdInput && meetingId) {
+      meetingIdInput.value = meetingId;
+      console.log(`✅ [Participants] Auto-populated Meeting ID input: ${meetingId.substring(0, 8)}...`);
+    }
+
+    if (meetingId) {
+      meetingDisplay.innerHTML = `<strong>${meetingTitle}</strong> <span style="color: #666; font-family: monospace;">(${meetingId.substring(0, 8)}...)</span>`;
+      console.log(`✅ [Participants] Meeting info displayed: ${meetingTitle}`);
+    } else {
+      meetingDisplay.innerHTML = '<em>No meeting selected</em>';
+      console.log('ℹ️ [Participants] No meeting selected yet');
+    }
   }
 
   setupEventListeners() {
@@ -72,33 +98,87 @@ class ParticipantsPage {
         this.filterParticipants();
       });
     }
+
+    const entityTypeSelect = document.getElementById('participantEntityType');
+    if (entityTypeSelect) {
+      entityTypeSelect.value = this.entityType;
+      entityTypeSelect.addEventListener('change', async (e) => {
+        this.entityType = e.target.value || 'inceptions';
+        await this.loadParticipants();
+      });
+    }
+
+    const meetingIdInput = document.getElementById('participantMeetingId');
+    if (meetingIdInput) {
+      const storedMeeting = localStorage.getItem('CURRENT_MEETING') || '';
+      if (storedMeeting) {
+        meetingIdInput.value = storedMeeting;
+      }
+      meetingIdInput.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          await this.loadParticipants();
+        }
+      });
+    }
+
+    const loadBtn = document.getElementById('btnLoadParticipants');
+    if (loadBtn) {
+      loadBtn.addEventListener('click', async () => {
+        await this.loadParticipants();
+      });
+    }
+
+    // ✅ NEW: Change Meeting button - allow manual override
+    const changeMeetingBtn = document.getElementById('changeMeetingBtn');
+    if (changeMeetingBtn) {
+      changeMeetingBtn.addEventListener('click', () => {
+        const meetingIdInput = document.getElementById('participantMeetingId');
+        if (meetingIdInput) {
+          meetingIdInput.focus();
+          meetingIdInput.select();
+        }
+      });
+    }
   }
 
   async loadParticipants() {
     try {
-      // Get meetingId from URL or state - MUST be a specific meeting ID
-      let meetingId = localStorage.getItem('CURRENT_MEETING');
+      // Get meetingId from explicit input or localStorage fallback
+      const meetingIdInput = document.getElementById('participantMeetingId');
+      let meetingId = meetingIdInput?.value?.trim() || localStorage.getItem('CURRENT_MEETING');
       this.meetingId = meetingId;
+
+      if (meetingId) {
+        localStorage.setItem('CURRENT_MEETING', meetingId);
+      }
+
+      console.log(`📋 [Participants] loadParticipants called - entityType=${this.entityType}, meetingId=${meetingId}`);
 
       // If no meeting ID, show empty state
       if (!meetingId) {
-        console.log('ℹ️ No meeting selected - participants list is empty');
+        console.log('ℹ️ [Participants] No meeting selected - participants list is empty');
+        console.log('💡 Tip: Click a meeting on the Meetings page first to auto-load');
         this.participants = [];
         this.renderParticipants();
         return;
       }
 
-      console.log(`👥 Loading participants for entityType=${this.entityType}, meetingId=${meetingId}`);
+      console.log(`👥 [Participants] Loading participants for entityType=${this.entityType}, meetingId=${meetingId.substring(0, 8)}...`);
 
       // Call service with entityType and meetingId
       // Service returns array directly (handles response wrapper internally)
       const participants = await participantsService.listParticipants(this.entityType, meetingId);
+      console.log(`📦 [Participants] Raw response from service:`, participants);
+      console.log(`📦 [Participants] Is array? ${Array.isArray(participants)}, Length: ${participants?.length || 0}`);
+      
       this.participants = Array.isArray(participants) ? participants : [];
+      console.log(`✅ [Participants] Set this.participants to:`, this.participants);
       
       this.filterParticipants();
       this.renderParticipants();
     } catch (error) {
-      console.error('Failed to load participants:', error);
+      console.error('❌ [Participants] Failed to load participants:', error);
       this.participants = [];
       this.renderParticipants();
     }
@@ -106,6 +186,10 @@ class ParticipantsPage {
 
   filterParticipants() {
     const search = document.getElementById('searchParticipants')?.value?.toLowerCase() || '';
+
+    console.log(`🔍 [filterParticipants] Starting filter with search="${search}"`);
+    console.log(`📦 [filterParticipants] Total participants before filter: ${this.participants.length}`);
+    console.log(`📋 [filterParticipants] Participants data:`, this.participants);
 
     this.filteredParticipants = this.participants.filter(participant => {
       // Search by userId, roleDescription, or any user info
@@ -117,17 +201,25 @@ class ParticipantsPage {
       return matchesSearch;
     });
 
+    console.log(`✅ [filterParticipants] Filtered to: ${this.filteredParticipants.length} participants`);
     this.renderParticipants();
   }
 
   renderParticipants() {
     const tbody = document.getElementById('participantsBody');
-    if (!tbody) return;
+    if (!tbody) {
+      console.error('❌ [renderParticipants] participantsBody element not found!');
+      return;
+    }
+
+    console.log(`🎨 [renderParticipants] Starting render with ${this.filteredParticipants.length} participants`);
+    console.log(`📊 [renderParticipants] Filtered participants:`, this.filteredParticipants);
 
     if (!Array.isArray(this.filteredParticipants) || this.filteredParticipants.length === 0) {
+      console.warn('⚠️ [renderParticipants] No participants to display');
       tbody.innerHTML = `
         <tr>
-          <td colspan="5" style="text-align: center;">
+          <td colspan="4" style="text-align: center;">
             <div class="empty-state">
               <div class="empty-icon">👥</div>
               <h3>No Participants</h3>
@@ -139,14 +231,20 @@ class ParticipantsPage {
       return;
     }
 
-    tbody.innerHTML = this.filteredParticipants.map(participant => `
+    const html = this.filteredParticipants.map(participant => {
+      console.log(`📝 [renderParticipants] Rendering participant:`, participant);
+      
+      // Backend returns: displayName (not userName), role (not roleDescription)
+      const name = participant.displayName || participant.userName || 'N/A';
+      const role = participant.roleDescription || participant.role || 'Participant';
+      
+      return `
       <tr>
         <td><strong>${participant.userId}</strong></td>
-        <td>${participant.userName || 'N/A'}</td>
+        <td>${name}</td>
         <td>
-          <span class="badge badge-secondary">${participant.roleDescription || 'Participant'}</span>
+          <span class="badge badge-secondary">${role}</span>
         </td>
-        <td>${new Date(participant.createdAt).toLocaleDateString()}</td>
         <td>
           <div class="action-buttons">
             <button class="btn btn-sm btn-secondary" onclick="window.participantsPage.editParticipant('${participant._id}')">Edit</button>
@@ -154,7 +252,11 @@ class ParticipantsPage {
           </div>
         </td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
+    
+    tbody.innerHTML = html;
+    console.log(`✅ [renderParticipants] Rendered ${this.filteredParticipants.length} participants successfully`);
   }
 
   openParticipantModal(participantId = null) {
@@ -209,10 +311,10 @@ class ParticipantsPage {
 
       let response;
       if (this.editingParticipantId) {
-        // UPDATE participant
+        // UPDATE participant - pass meetingId instead of participantId
         response = await participantsService.updateParticipant(
           this.entityType,
-          this.editingParticipantId,
+          this.meetingId,  // ✅ Changed from editingParticipantId to meetingId
           participantData
         );
         console.log('✅ Participant updated:', response);
@@ -243,12 +345,32 @@ class ParticipantsPage {
   async deleteParticipant(participantId) {
     if (confirm('Are you sure you want to remove this participant?')) {
       try {
-        await participantsService.removeParticipant(this.entityType, participantId);
+        console.log(`🗑️ [deleteParticipant] Attempting to delete participant: ${participantId}`);
+        
+        // Find the participant to get userId
+        const participant = this.participants.find(p => p._id === participantId);
+        if (!participant) {
+          console.error('❌ [deleteParticipant] Participant not found:', participantId);
+          alert('Participant not found');
+          return;
+        }
+
+        console.log(`📋 [deleteParticipant] Found participant:`, participant);
+        console.log(`🔄 [deleteParticipant] Calling removeParticipant with userId: ${participant.userId}, meetingId: ${this.meetingId}`);
+        
+        // Call remove with proper data structure (meetingId in path, userId in body)
+        const response = await participantsService.removeParticipant(
+          this.entityType,
+          this.meetingId,  // ✅ meetingId in path
+          { userId: participant.userId }  // ✅ userId in body
+        );
+        
+        console.log(`✅ [deleteParticipant] Response:`, response);
         alert('Participant removed successfully!');
         await this.loadParticipants();
       } catch (error) {
-        console.error('Failed to delete:', error);
-        alert('Failed to remove participant');
+        console.error('❌ [deleteParticipant] Failed to delete:', error);
+        alert(`Failed to remove participant: ${error.message}`);
       }
     }
   }
