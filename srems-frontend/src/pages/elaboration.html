@@ -4,9 +4,18 @@
       <h1 class="page-title">Elaboration</h1>
       <p class="page-subtitle">Detailed requirements analysis and breakdown</p>
     </div>
-    <button class="btn btn-primary" id="btnStartElaboration">
-      <span class="btn-icon">▶️</span> Start Elaboration
-    </button>
+    <div class="header-actions">
+      <button class="btn btn-outline-primary hidden" id="btnFreezeElaboration">
+        <span>🧊</span> Freeze Phase
+      </button>      <button class="btn btn-outline-danger hidden" id="btnDeleteElaboration">
+        <span>🗑️</span> Delete Phase
+      </button>      <button class="btn btn-primary" id="btnCreateElaboration">
+        <span class="btn-icon">➕</span> Create Phase
+      </button>
+      <button class="btn btn-primary hidden" id="btnStartElaboration">
+        <span class="btn-icon">▶️</span> Start Elaborating
+      </button>
+    </div>
   </div>
 
   <!-- Status Overview -->
@@ -34,7 +43,7 @@
   <!-- Elaboration Items -->
   <div id="elaborationContainer" class="elaboration-items">
     <div class="loading-spinner">
-      <div class="spinner"></div>
+      <div class="loader"><div class="cell d-0"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-4"></div></div>
       Loading requirements...
     </div>
   </div>
@@ -94,3 +103,30 @@
     </form>
   </div>
 </div>
+
+<!-- Delete Modal -->
+<div id="deleteElaborationModal" class="modal hidden">
+  <div class="modal-content">
+    <button class="modal-close" data-close-modal="deleteElaborationModal">&times;</button>
+    <h3>Delete Elaboration Phase</h3>
+    <form id="deleteElaborationForm" class="modal-form">
+      <label for="elabDeletionReasonType" class="form-label">Deletion Reason <span class="required">*</span></label>
+      <select id="elabDeletionReasonType" class="form-control" required>
+        <option value="">Select reason</option>
+        <option value="duplicate_phase">Duplicate</option>
+        <option value="test_or_demo_phase_cleanup">Test / Demo Cleanup</option>
+        <option value="created_by_admin_mistake">Admin Error</option>
+        <option value="other">Other</option>
+      </select>
+
+      <label for="elabDeletionReasonDescription" class="form-label">Description (optional)</label>
+      <textarea id="elabDeletionReasonDescription" class="form-control" rows="3" placeholder="Additional details..."></textarea>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal="deleteElaborationModal">Cancel</button>
+        <button type="submit" class="btn btn-danger">Delete Elaboration</button>
+      </div>
+    </form>
+  </div>
+</div>
+
