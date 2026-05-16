@@ -16,6 +16,7 @@ body {
     0 8px 20px rgba(0, 0, 0, 0.5),
     0 4px 10px rgba(0, 0, 0, 0.12);
 }
+
 .phone-container {
   display: flex;
   gap: 6px;
@@ -33,6 +34,7 @@ body {
 .phone-container input {
   flex: 1;
 }
+
 .auth-form h2 {
   text-align: center;
   margin-bottom: 20px;
@@ -76,15 +78,18 @@ button {
 button:hover {
   background: #5a67d8;
 }
+
 .error {
   color: red;
   font-size: 12px;
   margin-top: 4px;
   display: block;
 }
-.asterik{
-    color: red;
+
+.asterik {
+  color: red;
 }
+
 .success {
   color: green;
   font-size: 14px;
@@ -92,6 +97,7 @@ button:hover {
   font-weight: bold;
   text-align: center;
 }
+
 .switch,
 .forgot {
   text-align: center;
@@ -110,6 +116,7 @@ button:hover {
 .forgot a:hover {
   text-decoration: underline;
 }
+
 .password-field {
   position: relative;
 }
@@ -126,7 +133,8 @@ button:hover {
   opacity: 1;
 }
 
-input, select {
+input,
+select {
   border: 1px solid #ccc;
   outline: none;
   padding: 10px;
@@ -139,6 +147,7 @@ select:focus {
   border-color: #4f46e5;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
+
 #countryCode {
   min-width: 110px;
   max-width: 400px;
@@ -228,5 +237,3 @@ select:focus {
 .dashboard-body .btn-danger:hover {
   background: #c53030;
 }
-
-
