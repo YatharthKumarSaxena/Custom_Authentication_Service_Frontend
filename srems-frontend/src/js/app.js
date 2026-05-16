@@ -89,7 +89,7 @@ class App {
         console.log('[App] ⚠️  No authentication token found. Redirecting to login...');
         showToast('Session expired. Please login again.', 'warning');
         // Redirect to Authentication Dashboard
-        window.location.href = `${window.location.origin}/`;
+        window.location.href = 'http://localhost:5500';
         return;
       }
       
@@ -111,6 +111,7 @@ class App {
       this.setupEventListeners();
       this.setupNavigation();
       this.updateUserDisplay();
+      this.applyRoleBasedUI();
       
       // Subscribe to store changes
       this.store.subscribe((state) => this.onStateChange(state));
@@ -450,6 +451,7 @@ class App {
       'requirements': './src/pages/requirements.html',
       'scope': './src/pages/scope.html',
       'features': './src/pages/features.html',
+      'ideas': './src/pages/ideas.html',
       'stakeholders': './src/pages/stakeholders.html',
       'elaboration': './src/pages/elaboration.html',
       'negotiation': './src/pages/negotiation.html',
@@ -492,6 +494,7 @@ class App {
       'requirements': () => import('../pages/requirements.js').then(m => new m.RequirementsPage()),
       'scope': () => import('../pages/scope.js').then(m => new m.ScopePage()),
       'features': () => import('../pages/features.js').then(m => new m.FeaturesPage()),
+      'ideas': () => import('../pages/ideas.js').then(m => new m.IdeasPage()),
       'stakeholders': () => import('../pages/stakeholders.js').then(m => new m.StakeholdersPage()),
       'negotiation': () => import('../pages/negotiation.js').then(m => new m.NegotiationPage()),
       'specification': () => import('../pages/specification.js').then(m => new m.SpecificationPage()),
@@ -638,6 +641,23 @@ class App {
     }
   }
 
+  /**
+   * Apply role-based UI adjustments (e.g., hide admin elements for clients)
+   */
+  applyRoleBasedUI() {
+    // Determine role from localStorage (default to admin if not set for safety)
+    const role = localStorage.getItem('user_role');
+    
+    // Check if the role is a client role
+    const clientRoles = ['sponsor', 'partner', 'vendor', 'end_user', 'other'];
+    if (clientRoles.includes(role)) {
+      document.body.classList.add('client-mode');
+      console.log('[App] Client mode enabled. Hiding admin-only elements.');
+    } else {
+      document.body.classList.remove('client-mode');
+    }
+  }
+
 
   showError(message) {
     this.store.addNotification(message, 'error');
@@ -687,7 +707,7 @@ class App {
     
     // Redirect to project folder's index.html
     setTimeout(() => {
-      window.location.href = '/project/index.html';
+      window.location.href = 'http://127.0.0.1:5500/PROJECT/project/index.html';
     }, 1000);
   }
 
