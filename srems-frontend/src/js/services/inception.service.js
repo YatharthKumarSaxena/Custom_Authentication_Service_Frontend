@@ -27,9 +27,15 @@ class InceptionService {
    */
   async getInceptions(projectId, page = 1, pageSize = 10) {
     try {
-      // Validate projectId is provided
+      // Validate projectId is provided and is a valid MongoDB ObjectId format
       if (!projectId) {
         throw new Error('Project ID is required to fetch inceptions');
+      }
+
+      // MongoDB ObjectId regex: 24 hex characters
+      const mongoIdRegex = /^[a-f\d]{24}$/i;
+      if (!mongoIdRegex.test(projectId)) {
+        throw new Error('Invalid project ID format');
       }
 
       const response = await apiClient.get(
@@ -83,6 +89,17 @@ class InceptionService {
     return apiClient.patch(
       `/inceptions/update/${projectId}`,
       { inceptionId, ...updateData }
+    );
+  }
+
+  /**
+   * Freeze inception document
+   * Backend: PATCH /inceptions/freeze/:projectId
+   */
+  async freezeInception(projectId) {
+    return apiClient.patch(
+      `/inceptions/freeze/${projectId}`,
+      {}
     );
   }
 
