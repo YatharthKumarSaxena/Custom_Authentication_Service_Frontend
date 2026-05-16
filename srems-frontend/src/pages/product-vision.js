@@ -9,6 +9,27 @@ export class ProductVisionPage {
     this.init();
   }
 
+  getCurrentProjectId() {
+    let currentProjectId = store.state.projects.current?._id || 
+                          store.state.projects.current?.id || 
+                          store.state.projects.current;
+
+    if (!currentProjectId) {
+      const storedProject = localStorage.getItem('CURRENT_PROJECT');
+      if (storedProject) {
+        try {
+          const projectData = typeof storedProject === 'string' ? JSON.parse(storedProject) : storedProject;
+          currentProjectId = projectData?._id || projectData?.id || projectData;
+          store.state.projects.current = projectData;
+        } catch (e) {
+          console.error('Failed to parse saved project:', e);
+        }
+      }
+    }
+
+    return currentProjectId;
+  }
+
   init() {
     this.attachEventListeners();
     this.loadProductVisions();
@@ -27,24 +48,7 @@ export class ProductVisionPage {
       const container = document.getElementById('productVisionContainer');
       container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Loading product vision documents...</p></div>';
 
-      // Get current project from store
-      let currentProjectId = store.state.projects.current?._id || 
-                            store.state.projects.current?.id || 
-                            store.state.projects.current;
-      
-      // Fallback to localStorage if store is empty
-      if (!currentProjectId) {
-        const storedProject = localStorage.getItem('CURRENT_PROJECT');
-        if (storedProject) {
-          try {
-            const projectData = typeof storedProject === 'string' ? JSON.parse(storedProject) : storedProject;
-            currentProjectId = projectData?._id || projectData?.id || projectData;
-            store.state.projects.current = projectData;
-          } catch (e) {
-            console.error('Failed to parse saved project:', e);
-          }
-        }
-      }
+      const currentProjectId = this.getCurrentProjectId();
 
       if (!currentProjectId) {
         showToast('No project selected. Please go back and select a project.', 'error');
@@ -57,8 +61,7 @@ export class ProductVisionPage {
       console.log('🔍 Loading product vision for project:', currentProjectId);
       const data = await productVisionService.getProductVisions(currentProjectId);
       
-      // Ensure visions is always an array
-      this.visions = Array.isArray(data) ? data : (data?.data || []);
+      this.visions = Array.isArray(data) ? data : [];
       this.filteredVisions = [...this.visions];
       
       if (this.visions.length === 0) {
@@ -79,10 +82,11 @@ export class ProductVisionPage {
     const search = document.getElementById('searchProductVision').value.toLowerCase();
 
     this.filteredVisions = this.visions.filter(item => {
-      const statusMatch = !status || item.status === status;
+      const itemStatus = item.isDeleted ? 'deleted' : (item.isFrozen ? 'frozen' : 'active');
+      const statusMatch = !status || itemStatus === status;
       const searchMatch = !search || 
-        item.title?.toLowerCase().includes(search) ||
-        item.productName?.toLowerCase().includes(search);
+        item.productVision?.toLowerCase().includes(search) ||
+        item.versionNumber?.toLowerCase().includes(search);
       return statusMatch && searchMatch;
     });
 
@@ -120,12 +124,9 @@ export class ProductVisionPage {
       // Map backend fields to display fields
       const displayItem = {
         id: item._id || item.id,
-        title: item.title || 'Untitled Vision',
+        title: `Product Vision ${item.versionNumber ? `v${item.versionNumber}` : ''}`.trim(),
         status: item.isFrozen ? 'Frozen' : (item.isDeleted ? 'Deleted' : 'Active'),
-        productName: item.productName || 'N/A',
-        visionStatement: item.visionStatement || 'Not defined',
-        targetMarket: item.targetMarket || 'N/A',
-        keyObjectives: Array.isArray(item.keyObjectives) ? item.keyObjectives : [],
+        productVision: item.productVision || 'Not defined',
         createdAt: createdDate
       };
 
@@ -136,13 +137,7 @@ export class ProductVisionPage {
             <span class="status-badge status-${displayItem.status.toLowerCase()}">${displayItem.status}</span>
           </div>
           <div class="card-body">
-            <p><strong>Product:</strong> ${displayItem.productName}</p>
-            <p><strong>Vision Statement:</strong> ${displayItem.visionStatement}</p>
-            <p><strong>Target Market:</strong> ${displayItem.targetMarket}</p>
-            <p><strong>Key Objectives:</strong></p>
-            <ul class="objectives-list">
-              ${displayItem.keyObjectives.slice(0, 3).map(obj => `<li>${obj}</li>`).join('')}
-            </ul>
+            <p><strong>Vision:</strong> ${displayItem.productVision}</p>
             <p><strong>Created:</strong> ${displayItem.createdAt}</p>
           </div>
           <div class="card-actions">
@@ -172,8 +167,7 @@ export class ProductVisionPage {
     document.querySelectorAll('.btnEditProductVision')?.forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = e.target.dataset.id;
-        console.log('Edit product vision:', id);
-        showToast('Edit feature coming soon', 'info');
+        this.openEditModal(id);
       });
     });
 
@@ -185,7 +179,8 @@ export class ProductVisionPage {
         const confirmed = await showConfirmDialog('Delete Product Vision', 'This action cannot be undone. Are you sure?');
         if (confirmed) {
           try {
-            await productVisionService.deleteProductVision(store.state.projects.current?._id, id);
+            const projectId = this.getCurrentProjectId();
+            await productVisionService.deleteProductVision(projectId, 'Deleted from frontend');
             showToast('Product vision deleted successfully', 'success');
             await this.loadProductVisions();
           } catch (error) {
@@ -202,6 +197,42 @@ export class ProductVisionPage {
   }
 
   openCreateModal() {
-    showToast('Create product vision document feature coming soon', 'info');
+    this.openEditModal();
+  }
+
+  async openEditModal(id = null) {
+    try {
+      const projectId = this.getCurrentProjectId();
+      if (!projectId) {
+        showToast('No project selected', 'error');
+        return;
+      }
+
+      const existing = id ? this.visions.find(v => (v._id || v.id) === id) : this.visions[0];
+      const existingText = existing?.productVision || '';
+      const value = window.prompt('Enter product vision', existingText);
+
+      if (value === null) {
+        return;
+      }
+
+      const productVision = value.trim();
+      if (!productVision) {
+        showToast('Product vision is required', 'error');
+        return;
+      }
+
+      if (existing) {
+        await productVisionService.updateProductVision(projectId, { productVision });
+        showToast('Product vision updated', 'success');
+      } else {
+        await productVisionService.createProductVision({ projectId, productVision });
+        showToast('Product vision created', 'success');
+      }
+
+      await this.loadProductVisions();
+    } catch (error) {
+      showToast(error.message || 'Failed to save product vision', 'error');
+    }
   }
 }
