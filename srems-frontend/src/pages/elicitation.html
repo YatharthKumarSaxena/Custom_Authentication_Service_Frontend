@@ -4,21 +4,24 @@
       <h1 class="page-title">Requirements Elicitation</h1>
       <p class="page-subtitle">Extract and gather requirements from stakeholders</p>
     </div>
-    <button class="btn btn-primary" id="btnCreateElicitation">
-      <span class="btn-icon">➕</span> New Elicitation
-    </button>
+    <div class="header-actions">
+      <button class="btn btn-outline-primary hidden" id="btnFreezeElicitation">
+        <span>🧊</span> Freeze Phase
+      </button>
+      <button class="btn btn-primary" id="btnCreateElicitation">
+        <span class="btn-icon">➕</span> New Elicitation
+      </button>
+    </div>
   </div>
 
   <!-- Filter Section -->
   <div class="filters-bar">
     <div class="filter-group">
-      <label for="filterMethod" class="filter-label">Method</label>
+      <label for="filterMethod" class="filter-label">Mode</label>
       <select id="filterMethod" class="filter-select">
-        <option value="">All Methods</option>
-        <option value="interview">Interview</option>
-        <option value="workshop">Workshop</option>
-        <option value="survey">Survey</option>
-        <option value="observation">Observation</option>
+        <option value="">All Modes</option>
+        <option value="OPEN">OPEN</option>
+        <option value="FAST">FAST</option>
       </select>
     </div>
     <div class="filter-group">
@@ -32,9 +35,9 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Method</th>
-          <th>Stakeholder</th>
+          <th>Created By</th>
+          <th>Mode</th>
+          <th>Parallel Meeting</th>
           <th>Date</th>
           <th>Status</th>
           <th>Actions</th>
@@ -43,7 +46,7 @@
       <tbody id="elicitationTableBody">
         <tr class="loading">
           <td colspan="6">
-            <div class="loading-spinner"><div class="spinner"></div><p>Loading elicitations...</p></div>
+            <div class="loading-spinner"><div class="loader"><div class="cell d-0"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-4"></div></div><p>Loading elicitations...</p></div>
           </td>
         </tr>
       </tbody>
@@ -57,4 +60,40 @@
     <p>Start gathering requirements from your stakeholders</p>
     <button class="btn btn-primary" id="btnCreateElicitationEmpty">Create First Elicitation</button>
   </div>
+
+  <!-- Create Elicitation Modal -->
+  <div id="createElicitationModal" class="modal hidden">
+    <div class="modal-overlay" onclick="this.closest('.modal').classList.add('hidden')"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Create New Elicitation</h2>
+        <button class="modal-close" data-close-modal="createElicitationModal">&times;</button>
+      </div>
+      <form id="createElicitationForm" class="modal-form">
+        <div class="form-group">
+          <label for="elicitationMode" class="form-label">Elicitation Mode *</label>
+          <select id="elicitationMode" class="form-input" required>
+            <option value="">-- Select a mode --</option>
+            <option value="OPEN">OPEN (Standard Elicitation)</option>
+            <option value="FAST">FAST (Facilitated Application Specification Technique)</option>
+          </select>
+          <small class="form-hint">Choose the methodology for this elicitation phase.</small>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="allowParallelMeetings" class="form-input">
+            <span>Allow Parallel Meetings</span>
+          </label>
+          <small class="form-hint">Enable multiple meetings to occur simultaneously</small>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">🚀 Create Phase</button>
+          <button type="button" class="btn btn-secondary" data-close-modal="createElicitationModal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
+
