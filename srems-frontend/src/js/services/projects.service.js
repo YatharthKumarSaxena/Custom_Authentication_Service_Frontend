@@ -28,8 +28,13 @@ class ProjectsService {
    * Get all projects (with pagination)
    */
   async getProjects(page = 1, pageSize = 10) {
+    const role = localStorage.getItem('user_role');
+    const clientRoles = ['sponsor', 'partner', 'vendor', 'end_user', 'other'];
+    const isClient = clientRoles.includes(role);
+    const endpoint = isClient ? '/clients/list-projects' : `${API_CONFIG.ENDPOINTS.PROJECTS}/list`;
+    
     const response = await apiClient.get(
-      `${API_CONFIG.ENDPOINTS.PROJECTS}/list?page=${page}&pageSize=${pageSize}`
+      `${endpoint}?page=${page}&pageSize=${pageSize}`
     );
     
     // Check if response was successful
@@ -46,7 +51,12 @@ class ProjectsService {
    * Get single project by ID
    */
   async getProjectById(projectId) {
-    const response = await apiClient.get(`${API_CONFIG.ENDPOINTS.PROJECTS}/get/${projectId}`);
+    const role = localStorage.getItem('user_role');
+    const clientRoles = ['sponsor', 'partner', 'vendor', 'end_user', 'other'];
+    const isClient = clientRoles.includes(role);
+    const endpoint = isClient ? `/clients/view-project/${projectId}` : `${API_CONFIG.ENDPOINTS.PROJECTS}/get/${projectId}`;
+    
+    const response = await apiClient.get(endpoint);
     
     // Check if response was successful
     if (!response.success) {
