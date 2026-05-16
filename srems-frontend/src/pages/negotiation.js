@@ -1,6 +1,7 @@
 import { requirementsService } from '../js/services/requirements.service.js';
+import { negotiationService } from '../js/services/negotiation.service.js';
 import { store } from '../js/store/store.js';
-import { showToast, showModal, hideModal } from '../js/utils/helpers.js';
+import { showToast, showConfirmDialog, showModal, hideModal } from '../js/utils/helpers.js';
 
 export class NegotiationPage {
   constructor() {
@@ -16,13 +17,25 @@ export class NegotiationPage {
   }
 
   attachEventListeners() {
+    document.getElementById('btnCreateNegotiation')?.addEventListener('click', () => this.handleCreateNegotiation());
+    document.getElementById('btnFreezeNegotiation')?.addEventListener('click', () => this.handleFreezeNegotiation());
+    document.getElementById('btnDeleteNegotiation')?.addEventListener('click', () => this.openDeleteModal());
     document.getElementById('btnStartVoting')?.addEventListener('click', () => this.startVoting());
     document.getElementById('votingForm')?.addEventListener('submit', (e) => this.handleVoteSubmit(e));
+    document.getElementById('deleteNegotiationForm')?.addEventListener('submit', (e) => this.handleDeleteNegotiation(e));
 
     // Sliders for score calculation
     document.getElementById('vote-importance')?.addEventListener('input', () => this.updateScore());
     document.getElementById('vote-effort')?.addEventListener('input', () => this.updateScore());
     document.getElementById('vote-risk')?.addEventListener('input', () => this.updateScore());
+
+    // Modal close buttons
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const modalId = e.currentTarget.getAttribute('data-close-modal');
+        hideModal(modalId);
+      });
+    });
   }
 
   async loadRequirements() {
@@ -50,11 +63,95 @@ export class NegotiationPage {
         return;
       }
 
-      this.requirements = await requirementsService.getRequirements(projectId);
-      this.renderVotingSummary();
-      this.renderVotingItems();
+      // Check for active negotiation phase
+      const negotiation = await negotiationService.getLatestNegotiation(projectId);
+      
+      const btnCreate = document.getElementById('btnCreateNegotiation');
+      const btnFreeze = document.getElementById('btnFreezeNegotiation');
+      const btnStart = document.getElementById('btnStartVoting');
+      const container = document.getElementById('votingContainer');
+
+      if (negotiation) {
+        // Hide create, show freeze and start
+        if (btnCreate) btnCreate.classList.add('hidden');
+        if (btnStart) btnStart.classList.remove('hidden');
+        
+        if (btnFreeze) {
+          if (!negotiation.isFrozen && !negotiation.isDeleted) {
+            btnFreeze.classList.remove('hidden');
+          } else {
+            btnFreeze.classList.add('hidden');
+            if (btnStart) btnStart.classList.add('hidden'); // Cannot start if frozen
+          }
+        }
+
+        const btnDelete = document.getElementById('btnDeleteNegotiation');
+        if (btnDelete) {
+          if (!negotiation.isFrozen && !negotiation.isDeleted) {
+            btnDelete.classList.remove('hidden');
+          } else {
+            btnDelete.classList.add('hidden');
+          }
+        }
+
+        this.requirements = await requirementsService.getRequirements(projectId);
+        this.renderVotingSummary();
+        this.renderVotingItems();
+      } else {
+        // Show create, hide others
+        if (btnCreate) btnCreate.classList.remove('hidden');
+        if (btnFreeze) btnFreeze.classList.add('hidden');
+        if (btnStart) btnStart.classList.add('hidden');
+        
+        if (container) {
+          container.innerHTML = '<div class="empty-state"><p>No Negotiation phase created yet. Create one to begin.</p></div>';
+        }
+      }
     } catch (error) {
       showToast(error.message || 'Failed to load requirements', 'error');
+    }
+  }
+
+  async handleCreateNegotiation() {
+    try {
+      let projectId = store.state.projects.current?._id || 
+                     store.state.projects.current?.id || 
+                     store.state.projects.current;
+
+      const response = await negotiationService.createNegotiation(projectId, {});
+      if (!response.success) {
+        showToast(response.message || 'Failed to create negotiation phase', 'error');
+        return;
+      }
+
+      showToast('Negotiation phase created successfully!', 'success');
+      await this.loadRequirements();
+    } catch (error) {
+      console.error('[Negotiation] Error creating phase:', error);
+      showToast(error.message || 'Failed to create negotiation phase', 'error');
+    }
+  }
+
+  async handleFreezeNegotiation() {
+    const confirmed = await showConfirmDialog('Freeze Negotiation Phase', 'Are you sure you want to freeze this phase? This action cannot be undone and will lock the phase from further edits.');
+    if (!confirmed) return;
+
+    try {
+      let projectId = store.state.projects.current?._id || 
+                     store.state.projects.current?.id || 
+                     store.state.projects.current;
+
+      const response = await negotiationService.freezeNegotiation(projectId);
+      if (!response.success) {
+        showToast(response.message || 'Failed to freeze negotiation phase', 'error');
+        return;
+      }
+
+      showToast('Negotiation phase frozen successfully. You can now proceed to Specification.', 'success');
+      await this.loadRequirements(); // Reload the data to update UI state
+    } catch (error) {
+      console.error('[Negotiation] Error freezing phase:', error);
+      showToast(error.message || 'Failed to freeze negotiation phase', 'error');
     }
   }
 
@@ -200,12 +297,50 @@ export class NegotiationPage {
     }
     this.openVotingModal(unvoted);
   }
+
+  openDeleteModal() {
+    showModal('deleteNegotiationModal');
+  }
+
+  async handleDeleteNegotiation(e) {
+    e.preventDefault();
+
+    try {
+      let projectId = store.state.projects.current?._id || 
+                     store.state.projects.current?.id || 
+                     store.state.projects.current;
+
+      if (!projectId) {
+        showToast('Please select a project', 'warning');
+        return;
+      }
+
+      const reasonType = document.getElementById('negDeletionReasonType')?.value?.trim() || '';
+      const reasonDescription = document.getElementById('negDeletionReasonDescription')?.value?.trim() || '';
+
+      if (!reasonType) {
+        showToast('Please select a valid deletion reason', 'error');
+        return;
+      }
+
+      const deleteData = { deletionReasonType: reasonType };
+      if (reasonDescription) deleteData.deletionReasonDescription = reasonDescription;
+
+      const response = await negotiationService.deleteNegotiation(projectId, deleteData);
+
+      if (!response.success) {
+        showToast(response.message || 'Failed to delete negotiation phase', 'error');
+        return;
+      }
+
+      hideModal('deleteNegotiationModal');
+      showToast('Negotiation phase deleted successfully', 'success');
+      setTimeout(() => { window.location.reload(); }, 800);
+    } catch (error) {
+      console.error('[Negotiation] Error deleting phase:', error);
+      showToast(error.message || 'Failed to delete negotiation phase', 'error');
+    }
+  }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    new NegotiationPage();
-  });
-} else {
-  new NegotiationPage();
-}
+
