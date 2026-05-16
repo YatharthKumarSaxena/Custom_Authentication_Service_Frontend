@@ -1,7 +1,33 @@
 import { featuresService } from '../js/services/features.service.js';
 import { store } from '../js/store/store.js';
 import { showToast, showConfirmDialog, showModal, hideModal } from '../js/utils/helpers.js';
-import { validateFormData } from '../js/utils/config.js';
+import { validateFormData } from '../js/utils/helpers.js';
+
+const FEATURE_FORM_FIELDS = {
+  title: {
+    id: 'title',
+    label: 'Feature title',
+    required: true,
+    validation: (value) => {
+      const text = value?.trim() || '';
+      if (text.length < 3) return 'Title must be at least 3 characters';
+      if (text.length > 200) return 'Title cannot exceed 200 characters';
+      return null;
+    }
+  },
+  description: {
+    id: 'description',
+    label: 'Feature description',
+    required: false,
+    validation: (value) => {
+      const text = value?.trim() || '';
+      if (!text) return null;
+      if (text.length < 10) return 'Description must be at least 10 characters';
+      if (text.length > 2000) return 'Description cannot exceed 2000 characters';
+      return null;
+    }
+  }
+};
 
 export class FeaturesPage {
   constructor() {
@@ -74,16 +100,19 @@ export class FeaturesPage {
   }
 
   createFeatureNode(feature) {
+    const featureId = feature._id || feature.id || feature.hlfId || '';
     return `
-      <div class="feature-node" data-feature-id="${feature._id}">
+      <div class="feature-node" data-feature-id="${featureId}">
         <div class="feature-header">
-          <h3>${feature.name}</h3>
+          <div class="feature-heading-block">
+            <h3>${feature.title || feature.name || 'Untitled Feature'}</h3>
+            <p class="feature-description">${feature.description || 'No description'}</p>
+          </div>
           <div class="feature-badges">
             ${feature.priority ? `<span class="badge priority-${feature.priority}">${feature.priority}</span>` : ''}
             ${feature.complexity ? `<span class="badge">${feature.complexity}</span>` : ''}
           </div>
         </div>
-        <p class="feature-description">${feature.description || 'No description'}</p>
         ${feature.estimatedEffort ? `<div class="feature-effort">Effort: ${feature.estimatedEffort}h</div>` : ''}
         <div class="feature-actions">
           <button class="btn-icon edit-feature">✏️</button>
@@ -96,6 +125,7 @@ export class FeaturesPage {
   attachFeatureListeners() {
     document.querySelectorAll('.feature-node').forEach(node => {
       const id = node.dataset.featureId;
+      if (!id || id === 'undefined') return;
       node.querySelector('.edit-feature')?.addEventListener('click', () => this.openEditModal(id));
       node.querySelector('.delete-feature')?.addEventListener('click', () => this.deleteFeature(id));
     });
@@ -109,12 +139,12 @@ export class FeaturesPage {
   }
 
   openEditModal(id) {
-    const feature = this.features.find(f => f._id === id);
+    const feature = this.features.find(f => (f._id || f.id || f.hlfId) === id);
     if (!feature) return;
 
     this.editingId = id;
     document.getElementById('featureModalTitle').textContent = 'Edit Feature';
-    document.getElementById('featureName').value = feature.name;
+    document.getElementById('featureName').value = feature.title || feature.name || '';
     document.getElementById('featureDescription').value = feature.description || '';
     document.getElementById('featurePriority').value = feature.priority || '';
     document.getElementById('featureComplexity').value = feature.complexity || '';
@@ -127,28 +157,53 @@ export class FeaturesPage {
     event.preventDefault();
 
     const formData = {
-      name: document.getElementById('featureName').value,
+      title: document.getElementById('featureName').value,
       description: document.getElementById('featureDescription').value,
-      priority: document.getElementById('featurePriority').value,
-      complexity: document.getElementById('featureComplexity').value,
-      estimatedEffort: parseFloat(document.getElementById('featureEstimate').value) || 0,
     };
 
-    const errors = validateFormData(formData, 'feature');
-    if (errors.length > 0) {
-      errors.forEach(err => {
-        const el = document.getElementById(`error-${err.field}`);
-        if (el) el.textContent = err.message;
+    const validation = validateFormData(formData, FEATURE_FORM_FIELDS);
+    if (!validation.isValid) {
+      Object.entries(validation.errors).forEach(([field, message]) => {
+        const el = document.getElementById(`error-${field}`);
+        if (el) el.textContent = message;
       });
       return;
     }
 
     try {
-      const projectId = store.getState().currentProject;
+      let projectId = store.state.projects.current?._id || 
+                     store.state.projects.current?.id || 
+                     store.state.projects.current;
+      
+      if (!projectId) {
+        const savedProject = localStorage.getItem('CURRENT_PROJECT');
+        if (savedProject) {
+          try {
+            const projectData = typeof savedProject === 'string' ? JSON.parse(savedProject) : savedProject;
+            projectId = projectData?._id || projectData?.id || projectData;
+          } catch (e) {
+            console.error('Failed to parse saved project:', e);
+          }
+        }
+      }
+      
+      if (!projectId) {
+        showToast('Project ID is required', 'error');
+        return;
+      }
+
+      const normalizedTitle = formData.title.trim().toLowerCase();
+      const matchingFeature = this.features.find(feature => {
+        const existingTitle = (feature.title || feature.name || '').trim().toLowerCase();
+        return existingTitle && existingTitle === normalizedTitle;
+      });
       
       if (this.editingId) {
         await featuresService.updateFeature(this.editingId, formData);
         showToast('Feature updated', 'success');
+      } else if (matchingFeature) {
+        await featuresService.updateFeature(matchingFeature._id || matchingFeature.id || matchingFeature.hlfId, formData);
+        showToast('Feature already existed, so it was updated', 'success');
       } else {
         await featuresService.createFeature(projectId, formData);
         showToast('Feature created', 'success');
@@ -157,6 +212,10 @@ export class FeaturesPage {
       hideModal('featureModal');
       await this.loadFeatures();
     } catch (error) {
+      if (error?.status === 409) {
+        showToast('High-level feature with this title already exists. Use a different title or edit the existing feature.', 'error');
+        return;
+      }
       showToast(error.message || 'Failed to save feature', 'error');
     }
   }
@@ -165,11 +224,20 @@ export class FeaturesPage {
     const confirmed = await showConfirmDialog('Delete this feature?');
     if (!confirmed) return;
 
+    if (!id || id === 'undefined') {
+      showToast('Feature ID is missing. Please reload the list and try again.', 'error');
+      return;
+    }
+
     try {
-      await featuresService.deleteFeature(id);
+      await featuresService.deleteFeature(id, 'Deleted from dashboard');
       showToast('Feature deleted', 'success');
       await this.loadFeatures();
     } catch (error) {
+      if (error?.status === 404) {
+        showToast('Feature not found. Reload the list and try again.', 'error');
+        return;
+      }
       showToast(error.message || 'Failed to delete', 'error');
     }
   }
