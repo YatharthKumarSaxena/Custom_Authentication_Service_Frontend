@@ -4,9 +4,18 @@
       <h1 class="page-title">Validation</h1>
       <p class="page-subtitle">Verify requirements completeness and acceptance</p>
     </div>
-    <button class="btn btn-primary" id="btnStartValidation">
-      <span class="btn-icon">✓</span> Start Validation
-    </button>
+    <div class="header-actions">
+      <button class="btn btn-outline-primary hidden" id="btnFreezeValidation">
+        <span>🧊</span> Freeze Phase
+      </button>      <button class="btn btn-outline-danger hidden" id="btnDeleteValidation">
+        <span>🗑️</span> Delete Phase
+      </button>      <button class="btn btn-primary" id="btnCreateValidation">
+        <span class="btn-icon">➕</span> Create Phase
+      </button>
+      <button class="btn btn-primary hidden" id="btnStartValidation">
+        <span class="btn-icon">✓</span> Start Validation
+      </button>
+    </div>
   </div>
 
   <!-- Validation Progress -->
@@ -32,7 +41,7 @@
   <!-- Validation Checklist -->
   <div id="validationContainer" class="validation-items">
     <div class="loading-spinner">
-      <div class="spinner"></div>
+      <div class="loader"><div class="cell d-0"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-4"></div></div>
       Loading requirements...
     </div>
   </div>
@@ -106,3 +115,30 @@
     </form>
   </div>
 </div>
+
+<!-- Delete Modal -->
+<div id="deleteValidationModal" class="modal hidden">
+  <div class="modal-content">
+    <button class="modal-close" data-close-modal="deleteValidationModal">&times;</button>
+    <h3>Delete Validation Phase</h3>
+    <form id="deleteValidationForm" class="modal-form">
+      <label for="valDeletionReasonType" class="form-label">Deletion Reason <span class="required">*</span></label>
+      <select id="valDeletionReasonType" class="form-control" required>
+        <option value="">Select reason</option>
+        <option value="duplicate_phase">Duplicate</option>
+        <option value="test_or_demo_phase_cleanup">Test / Demo Cleanup</option>
+        <option value="created_by_admin_mistake">Admin Error</option>
+        <option value="other">Other</option>
+      </select>
+
+      <label for="valDeletionReasonDescription" class="form-label">Description (optional)</label>
+      <textarea id="valDeletionReasonDescription" class="form-control" rows="3" placeholder="Additional details..."></textarea>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal="deleteValidationModal">Cancel</button>
+        <button type="submit" class="btn btn-danger">Delete Validation</button>
+      </div>
+    </form>
+  </div>
+</div>
+
