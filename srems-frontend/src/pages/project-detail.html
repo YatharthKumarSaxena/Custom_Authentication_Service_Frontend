@@ -5,7 +5,7 @@
       <h1 class="page-title" id="projectTitle">Loading...</h1>
       <p class="page-subtitle" id="projectSubtitle">Project details and management</p>
     </div>
-    <button class="btn btn-primary" id="btnEditProject" title="Edit project details">
+    <button class="btn btn-primary admin-only" id="btnEditProject" title="Edit project details">
       ✎ Edit Project
     </button>
   </div>
@@ -116,7 +116,7 @@
   </div>
 
   <!-- Action Buttons Section -->
-  <div class="project-actions-section">
+  <div class="project-actions-section admin-only">
     <div class="section-header">
       <h2>Project Actions</h2>
       <span class="section-subtitle">Manage project status and operations</span>
@@ -129,7 +129,7 @@
 
   <!-- Loading State -->
   <div class="loading-state" id="loadingState">
-    <div class="spinner"></div>
+    <div class="loader"><div class="cell d-0"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-4"></div></div>
     <p>Loading project details...</p>
   </div>
 
@@ -508,3 +508,4 @@
     </form>
   </div>
 </div>
+
