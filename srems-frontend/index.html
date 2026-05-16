@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Software Requirement Engineering Management System - Frontend">
+  <meta name="theme-color" content="#0b6fbf">
   <meta name="author" content="SREMS Team">
   <meta name="copyright" content="2026">
 
@@ -15,7 +16,7 @@
 <body class="light-mode">
   <div id="app" class="app-container">
     <div id="app-loading" class="app-loading hidden" aria-live="polite">
-      <div class="spinner"></div>
+      <div class="loader"><div class="cell d-0"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-4"></div></div>
       <p>Loading SREMS...</p>
     </div>
 
@@ -39,7 +40,7 @@
 
           <button class="btn-theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle theme">◐</button>
 
-          <a href="/project/app/dashboard.html" class="btn btn-md btn-outline-primary auth-dashboard-link" title="Go to Management Dashboard">🏢 <span>Authentication</span></a>
+          <a href="http://127.0.0.1:5500/PROJECT/project/app/dashboard.html" class="btn btn-md btn-outline-primary" title="Go to Management Dashboard" style="margin-right: 12px; display: flex; align-items: center; gap: 6px;">🏢 <span>Authentication</span></a>
 
           <div class="user-menu">
             <div class="user-avatar" aria-hidden="true">AD</div>
@@ -77,7 +78,7 @@
             </ul>
           </div>
 
-          <div class="nav-section">
+          <div class="nav-section admin-only">
             <h3 class="nav-section-title collapsible-section" data-section="engineering">
               <span class="section-title-text">Requirements Engineering</span>
               <span class="collapse-icon">▼</span>
@@ -85,6 +86,7 @@
             <ul class="sidebar-menu">
               <li><a href="#/inception" data-link="/inception" class="sidebar-menu-item" data-page="inception"><span class="menu-icon" aria-hidden="true">IN</span><span class="menu-text">Inception</span></a></li>
               <li><a href="#/elicitation" data-link="/elicitation" class="sidebar-menu-item" data-page="elicitation"><span class="menu-icon" aria-hidden="true">EL</span><span class="menu-text">Elicitation</span></a></li>
+              <li><a href="#/ideas" data-link="/ideas" class="sidebar-menu-item" data-page="ideas"><span class="menu-icon" aria-hidden="true">ID</span><span class="menu-text">Ideas</span></a></li>
               <li><a href="#/product-request" data-link="/product-request" class="sidebar-menu-item" data-page="product-request"><span class="menu-icon" aria-hidden="true">RQ</span><span class="menu-text">Product Request</span></a></li>
               <li><a href="#/product-vision" data-link="/product-vision" class="sidebar-menu-item" data-page="product-vision"><span class="menu-icon" aria-hidden="true">PV</span><span class="menu-text">Product Vision</span></a></li>
               <li><a href="#/requirements" data-link="/requirements" class="sidebar-menu-item" data-page="requirements"><span class="menu-icon" aria-hidden="true">RE</span><span class="menu-text">Requirements</span></a></li>
@@ -105,7 +107,7 @@
             <ul class="sidebar-menu">
               <li><a href="#/stakeholders" data-link="/stakeholders" class="sidebar-menu-item" data-page="stakeholders"><span class="menu-icon" aria-hidden="true">ST</span><span class="menu-text">Stakeholders</span></a></li>
               <li><a href="#/participants" data-link="/participants" class="sidebar-menu-item" data-page="participants"><span class="menu-icon" aria-hidden="true">👥</span><span class="menu-text">Participants</span></a></li>
-              <li><a href="#/activity" data-link="/activity" class="sidebar-menu-item" data-page="activity"><span class="menu-icon" aria-hidden="true">AL</span><span class="menu-text">Activity Log</span></a></li>
+              <li class="admin-only"><a href="#/activity" data-link="/activity" class="sidebar-menu-item" data-page="activity"><span class="menu-icon" aria-hidden="true">AL</span><span class="menu-text">Activity Log</span></a></li>
             </ul>
           </div>
 
@@ -137,7 +139,7 @@
 
       <main class="main-content" id="page-content" role="main">
         <div class="page-loading">
-          <div class="spinner"></div>
+          <div class="loader"><div class="cell d-0"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-1"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-2"></div><div class="cell d-3"></div><div class="cell d-4"></div></div>
           <p>Loading workspace...</p>
         </div>
       </main>
@@ -166,3 +168,4 @@
   <script type="module" src="./src/js/app.js"></script>
 </body>
 </html>
+
