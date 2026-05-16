@@ -1,6 +1,7 @@
 import { requirementsService } from '../js/services/requirements.service.js';
+import { elaborationService } from '../js/services/elaboration.service.js';
 import { store } from '../js/store/store.js';
-import { showToast, showModal, hideModal } from '../js/utils/helpers.js';
+import { showToast, showConfirmDialog, showModal, hideModal } from '../js/utils/helpers.js';
 
 export class ElaborationPage {
   constructor() {
@@ -17,7 +18,19 @@ export class ElaborationPage {
 
   attachEventListeners() {
     document.getElementById('btnStartElaboration')?.addEventListener('click', () => this.startElaboration());
+    document.getElementById('btnCreateElaboration')?.addEventListener('click', () => this.handleCreateElaboration());
+    document.getElementById('btnFreezeElaboration')?.addEventListener('click', () => this.handleFreezeElaboration());
+    document.getElementById('btnDeleteElaboration')?.addEventListener('click', () => this.openDeleteModal());
     document.getElementById('elaborationForm')?.addEventListener('submit', (e) => this.handleFormSubmit(e));
+    document.getElementById('deleteElaborationForm')?.addEventListener('submit', (e) => this.handleDeleteElaboration(e));
+    
+    // Modal close buttons
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const modalId = e.currentTarget.getAttribute('data-close-modal');
+        hideModal(modalId);
+      });
+    });
   }
 
   async loadRequirements() {
@@ -45,10 +58,97 @@ export class ElaborationPage {
         return;
       }
 
-      this.requirements = await requirementsService.getRequirements(projectId);
-      this.renderRequirementsQueue();
+      // Check for active elaboration phase
+      const elaboration = await elaborationService.getLatestElaboration(projectId);
+      
+      const btnCreate = document.getElementById('btnCreateElaboration');
+      const btnFreeze = document.getElementById('btnFreezeElaboration');
+      const btnStart = document.getElementById('btnStartElaboration');
+      const container = document.getElementById('elaborationContainer');
+
+      if (elaboration) {
+        // Hide create, show freeze and start
+        if (btnCreate) btnCreate.classList.add('hidden');
+        if (btnStart) btnStart.classList.remove('hidden');
+        
+        if (btnFreeze) {
+          if (!elaboration.isFrozen && !elaboration.isDeleted) {
+            btnFreeze.classList.remove('hidden');
+          } else {
+            btnFreeze.classList.add('hidden');
+            if (btnStart) btnStart.classList.add('hidden'); // Cannot start if frozen
+          }
+        }
+
+        const btnDelete = document.getElementById('btnDeleteElaboration');
+        if (btnDelete) {
+          if (!elaboration.isFrozen && !elaboration.isDeleted) {
+            btnDelete.classList.remove('hidden');
+          } else {
+            btnDelete.classList.add('hidden');
+          }
+        }
+
+        this.requirements = await requirementsService.getRequirements(projectId);
+        this.renderRequirementsQueue();
+      } else {
+        // Show create, hide others
+        if (btnCreate) btnCreate.classList.remove('hidden');
+        if (btnFreeze) btnFreeze.classList.add('hidden');
+        if (btnStart) btnStart.classList.add('hidden');
+        
+        const btnDelete = document.getElementById('btnDeleteElaboration');
+        if (btnDelete) btnDelete.classList.add('hidden');
+        
+        if (container) {
+          container.innerHTML = '<div class="empty-state"><p>No Elaboration phase created yet. Create one to begin.</p></div>';
+        }
+      }
     } catch (error) {
       showToast(error.message || 'Failed to load requirements', 'error');
+    }
+  }
+
+  async handleCreateElaboration() {
+    try {
+      let projectId = store.state.projects.current?._id || 
+                     store.state.projects.current?.id || 
+                     store.state.projects.current;
+
+      const response = await elaborationService.createElaboration(projectId, {});
+      if (!response.success) {
+        showToast(response.message || 'Failed to create elaboration phase', 'error');
+        return;
+      }
+
+      showToast('Elaboration phase created successfully!', 'success');
+      await this.loadRequirements();
+    } catch (error) {
+      console.error('[Elaboration] Error creating phase:', error);
+      showToast(error.message || 'Failed to create elaboration phase', 'error');
+    }
+  }
+
+  async handleFreezeElaboration() {
+    const confirmed = await showConfirmDialog('Freeze Elaboration Phase', 'Are you sure you want to freeze this phase? This action cannot be undone and will lock the phase from further edits.');
+    if (!confirmed) return;
+
+    try {
+      let projectId = store.state.projects.current?._id || 
+                     store.state.projects.current?.id || 
+                     store.state.projects.current;
+
+      const response = await elaborationService.freezeElaboration(projectId);
+      if (!response.success) {
+        showToast(response.message || 'Failed to freeze elaboration phase', 'error');
+        return;
+      }
+
+      showToast('Elaboration phase frozen successfully. You can now proceed to Negotiation.', 'success');
+      await this.loadRequirements(); // Reload the data to update UI state
+    } catch (error) {
+      console.error('[Elaboration] Error freezing phase:', error);
+      showToast(error.message || 'Failed to freeze elaboration phase', 'error');
     }
   }
 
@@ -153,12 +253,50 @@ export class ElaborationPage {
     }
     this.openElaborationModal(unelaborated);
   }
+
+  openDeleteModal() {
+    showModal('deleteElaborationModal');
+  }
+
+  async handleDeleteElaboration(e) {
+    e.preventDefault();
+
+    try {
+      let projectId = store.state.projects.current?._id || 
+                     store.state.projects.current?.id || 
+                     store.state.projects.current;
+
+      if (!projectId) {
+        showToast('Please select a project', 'warning');
+        return;
+      }
+
+      const reasonType = document.getElementById('elabDeletionReasonType')?.value?.trim() || '';
+      const reasonDescription = document.getElementById('elabDeletionReasonDescription')?.value?.trim() || '';
+
+      if (!reasonType) {
+        showToast('Please select a valid deletion reason', 'error');
+        return;
+      }
+
+      const deleteData = { deletionReasonType: reasonType };
+      if (reasonDescription) deleteData.deletionReasonDescription = reasonDescription;
+
+      const response = await elaborationService.deleteElaboration(projectId, deleteData);
+
+      if (!response.success) {
+        showToast(response.message || 'Failed to delete elaboration phase', 'error');
+        return;
+      }
+
+      hideModal('deleteElaborationModal');
+      showToast('Elaboration phase deleted successfully', 'success');
+      setTimeout(() => { window.location.reload(); }, 800);
+    } catch (error) {
+      console.error('[Elaboration] Error deleting phase:', error);
+      showToast(error.message || 'Failed to delete elaboration phase', 'error');
+    }
+  }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    new ElaborationPage();
-  });
-} else {
-  new ElaborationPage();
-}
+
