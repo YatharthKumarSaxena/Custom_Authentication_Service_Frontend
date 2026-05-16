@@ -33,7 +33,7 @@ export const API_CONFIG = {
     // SREMS RE Workflow - PLURAL FORMS TO MATCH BACKEND
     SCOPE: '/scope',
     HIGH_LEVEL_FEATURES: '/high-level-features',
-    IDEAS: '/ideas',                                // Backend: /ideas (PLURAL!)
+    IDEAS: '/ideas',
     PRODUCT_VISION: '/product-vision',              // Backend: /product-vision (NO list endpoint)
     ELICITATION: '/elicitations',                   // Backend: /elicitations (PLURAL!)
     INCEPTION: '/inceptions',                       // Backend: /inceptions (PLURAL!)
@@ -428,7 +428,7 @@ export const COMMENT_ENTITY_TYPES = Object.freeze({
   SCOPES: 'scopes',
   REQUIREMENTS: 'requirements',
   INCEPTIONS: 'inceptions',
-  HIGH_LEVEL_FEATURES: 'high_level_features',
+  HIGH_LEVEL_FEATURES: 'high-level-features',
   EXTERNAL_INTERFACES: 'external_interfaces',
   IDEAS: 'ideas',
   MEETINGS: 'meetings',
