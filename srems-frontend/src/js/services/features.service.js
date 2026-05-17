@@ -113,3 +113,6 @@ class FeaturesService {
 
 export const featuresService = new FeaturesService();
 export default featuresService;
+
+// Dev: features service loaded
+console.debug('featuresService loaded');
