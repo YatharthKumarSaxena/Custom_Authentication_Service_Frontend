@@ -69,8 +69,8 @@ function logoutAdmin() {
   
   // Add small delay for UI feedback
   setTimeout(() => {
-    // Redirect to Project login page
-    window.location.href = 'http://127.0.0.1:5500/project/index.html';
+    // Redirect to the admin login page used by this panel
+    window.location.href = '../auth/login.html';
   }, 300);
 }
 
@@ -82,20 +82,26 @@ function logoutAdmin() {
  * @param {number} duration - Display duration in milliseconds
  */
 function showNotification(message, type = 'success', duration = 3000) {
-  const notification = document.getElementById('notification');
+  let notification = document.getElementById('notification');
   if (!notification) {
     const div = document.createElement('div');
     div.id = 'notification';
     div.className = 'notification';
+    div.setAttribute('role', 'status');
+    div.setAttribute('aria-live', 'polite');
     document.body.appendChild(div);
+    notification = div;
   }
 
-  const notif = document.getElementById('notification');
-  notif.textContent = message;
-  notif.className = `notification show ${type}`;
+  notification.textContent = message;
+  notification.className = `notification show ${type}`;
 
-  setTimeout(() => {
-    notif.classList.remove('show');
+  if (notification._hideTimer) {
+    clearTimeout(notification._hideTimer);
+  }
+
+  notification._hideTimer = setTimeout(() => {
+    notification.classList.remove('show');
   }, duration);
 }
 
