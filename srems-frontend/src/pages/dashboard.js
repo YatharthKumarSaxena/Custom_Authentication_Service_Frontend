@@ -9,6 +9,8 @@ export class DashboardPage {
   }
 
   init() {
+    // Ensure tab title is descriptive for quick context
+    try { document.title = 'SREMS | Dashboard'; } catch (e) { /* ignore in non-browser envs */ }
     this.attachEventListeners();
     this.animateStatCounters();
     this.loadDashboardData();
