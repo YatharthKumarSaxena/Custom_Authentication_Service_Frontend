@@ -9,6 +9,9 @@ import { STORAGE_KEYS } from './utils/constants.js';
 
 // Dev: add startup log
 console.log("srems-frontend: app.js loaded");
+// Application version (kept in sync with index.html)
+const APP_VERSION = '1.0.1';
+console.info(`[App] Version: ${APP_VERSION}`);
 // ═══════════════════════════════════════════════════════════════════════════
 // DEVICE MANAGEMENT FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
