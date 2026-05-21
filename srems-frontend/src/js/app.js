@@ -12,6 +12,8 @@ console.log("srems-frontend: app.js loaded");
 // Application version (kept in sync with index.html)
 const APP_VERSION = '1.0.1';
 console.info(`[App] Version: ${APP_VERSION}`);
+// Expose version on window for other scripts and templates
+try{ window.SREMS_APP_VERSION = APP_VERSION; }catch(e){/* ignore */}
 // ═══════════════════════════════════════════════════════════════════════════
 // DEVICE MANAGEMENT FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
