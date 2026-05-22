@@ -10,7 +10,7 @@ import { STORAGE_KEYS } from './utils/constants.js';
 // Dev: add startup log
 console.log("srems-frontend: app.js loaded");
 // Application version (kept in sync with index.html)
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.2';
 console.info(`[App] Version: ${APP_VERSION}`);
 // Expose version on window for other scripts and templates
 try{ window.SREMS_APP_VERSION = APP_VERSION; }catch(e){/* ignore */}
