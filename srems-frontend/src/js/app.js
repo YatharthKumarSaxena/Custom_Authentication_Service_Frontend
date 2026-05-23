@@ -14,6 +14,8 @@ const APP_VERSION = '1.0.2';
 console.info(`[App] Version: ${APP_VERSION}`);
 // Expose version on window for other scripts and templates
 try{ window.SREMS_APP_VERSION = APP_VERSION; }catch(e){/* ignore */}
+// Also expose version on the root HTML element for CSS/selectors
+try{ if (typeof document !== 'undefined' && document.documentElement) document.documentElement.setAttribute('data-app-version', APP_VERSION); }catch(e){/* ignore */}
 // ═══════════════════════════════════════════════════════════════════════════
 // DEVICE MANAGEMENT FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
