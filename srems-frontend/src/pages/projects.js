@@ -4,6 +4,9 @@ import { showToast, showConfirmDialog, showModal, hideModal, debounce, formatDat
 import { validateFormData, FORM_FIELDS } from '../js/utils/config.js';
 import { PHASES, PROJECT_STATUS, STATUS_COLORS as COLORS } from '../js/utils/constants.js';
 
+// Dev: page load info
+try { console.info('[Page] ProjectsPage loaded — app version', window?.SREMS_APP_VERSION || 'unknown'); } catch (e) {}
+
 export class ProjectsPage {
   constructor() {
     this.projects = [];
@@ -124,6 +127,9 @@ export class ProjectsPage {
     container.querySelectorAll('.project-card').forEach(card => {
       this.attachCardListeners(card);
     });
+
+    // Dev: log how many projects were rendered
+    try { console.debug(`[Projects] Rendered ${this.filteredProjects.length} project(s)`); } catch (e) {}
   }
 
   createProjectCard(project) {
