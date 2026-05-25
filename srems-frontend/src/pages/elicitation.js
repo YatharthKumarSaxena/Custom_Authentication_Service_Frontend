@@ -10,6 +10,8 @@ export class ElicitationPage {
   }
 
   init() {
+    try { document.title = 'SREMS | Elicitation'; } catch (e) {}
+    try { console.info('[Page] ElicitationPage init — app version', window?.SREMS_APP_VERSION || 'unknown'); } catch (e) {}
     this.attachEventListeners();
     this.loadElicitations();
   }
