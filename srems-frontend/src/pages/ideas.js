@@ -11,6 +11,9 @@ export class IdeasPage {
   }
 
   init() {
+    // Set a descriptive title and log app version
+    try { document.title = 'SREMS | Ideas'; } catch (e) {}
+    try { console.info('[Page] IdeasPage init — app version', window?.SREMS_APP_VERSION || 'unknown'); } catch (e) {}
     this.attachEventListeners();
     this.loadIdeas();
   }
