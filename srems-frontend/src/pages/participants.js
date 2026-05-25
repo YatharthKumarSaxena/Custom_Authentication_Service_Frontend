@@ -19,6 +19,8 @@ class ParticipantsPage {
   }
 
   async init() {
+    try { document.title = 'SREMS | Participants'; } catch (e) {}
+    try { console.info('[Page] ParticipantsPage init — app version', window?.SREMS_APP_VERSION || 'unknown'); } catch (e) {}
     setTimeout(() => {
       this.setupEventListeners();
       this.updateMeetingInfoDisplay();  // ✅ Show current meeting info
