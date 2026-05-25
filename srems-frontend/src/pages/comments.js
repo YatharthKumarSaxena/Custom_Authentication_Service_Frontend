@@ -108,6 +108,10 @@ class CommentsPage {
             this.entityType = entityTypeSelect.value;
         }
 
+        // Set page title and surface app version in console (non-blocking)
+        try { document.title = 'SREMS | Comments'; } catch (e) {}
+        try { console.info('[Page] CommentsPage init — app version', window?.SREMS_APP_VERSION || 'unknown'); } catch (e) {}
+
         this.currentProjectId = this.getCurrentProjectId();
         this.loadEntityOptions();
     }
